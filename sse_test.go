@@ -14,10 +14,10 @@ func TestParser(t *testing.T) {
 	}{
 		{
 			name: "basic-case",
-			input: "event: message\n" +
-				"data: hello [END]\n\n" +
-				"event: message\n" +
-				"data: world [END]\n\n",
+			input: "event:message\n" +
+				"data:hello [END]\n\n" +
+				"event:message\n" +
+				"data:world [END]\n\n",
 			expected: []Message{
 				{
 					Event: "message",
@@ -29,12 +29,19 @@ func TestParser(t *testing.T) {
 				},
 			},
 		},
-		//{
-		//	name: "case2",
-		//},
-		//{
-		//	name: "case3",
-		//},
+		{
+			name: "truncated end",
+			input: "event:message\n" +
+				"data:hello [END]\n\n" +
+				"event:message\n" +
+				"data:worl\n\n",
+			expected: []Message{
+				{
+					Event: "message",
+					Data:  "hello [END]",
+				},
+			},
+		},
 	}
 
 	parser := NewParser(func(dataBytes string) bool {
@@ -50,6 +57,15 @@ func TestParser(t *testing.T) {
 
 			if len(result) != len(tt.expected) {
 				t.Errorf("expected %d messages, got %d", len(tt.expected), len(result))
+			}
+
+			for i, msg := range result {
+				if msg.Event != tt.expected[i].Event {
+					t.Errorf("expected event %s, got %s", tt.expected[i].Event, msg.Event)
+				}
+				if msg.Data != tt.expected[i].Data {
+					t.Errorf("expected data %s, got %s", tt.expected[i].Data, msg.Data)
+				}
 			}
 		})
 	}
