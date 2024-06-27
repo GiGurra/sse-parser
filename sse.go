@@ -149,8 +149,8 @@ func (w *Writer) Finish() {
 	}
 }
 
-func (p *Parser) Stream(reader io.Reader) <-chan Message {
-	ch := make(chan Message)
+func (p *Parser) Stream(reader io.Reader, msgBufSize int) <-chan Message {
+	ch := make(chan Message, msgBufSize)
 	writer := &Writer{parser: p, ch: ch}
 
 	go func() {
