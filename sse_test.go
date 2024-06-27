@@ -2,9 +2,11 @@ package sse_parser
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestParserChan(t *testing.T) {
@@ -51,6 +53,61 @@ func TestLongStream(t *testing.T) {
 	fmt.Printf("received %d messages\n", len(recvd))
 	if len(recvd) != nMessages {
 		t.Fatalf("expected %d messages, got %d", nMessages, len(recvd))
+	}
+}
+
+type ReaderImpl struct {
+	byteChan chan byte
+}
+
+func (r *ReaderImpl) Read(p []byte) (int, error) {
+	n := 0
+	for i := range p {
+		select {
+		case b := <-r.byteChan:
+			p[i] = b
+			n++
+		default:
+			// no more bytes available
+			return n, nil
+		}
+	}
+	return n, nil
+}
+
+func TestGradualStream(t *testing.T) {
+	nMessages := 1000
+	inputStream := make(chan byte, 1024)
+	reader := &ReaderImpl{
+		byteChan: inputStream,
+	}
+	parser := NewParser(func(dataBytes string) bool {
+		return strings.HasSuffix(dataBytes, "[END]")
+	})
+	nReceved := 0
+	messageStream := parser.Stream(reader, 100)
+	for i := 0; i < nMessages; i++ {
+		slog.Info(fmt.Sprintf("sending message %d", i))
+		message := "event:message\ndata:hello " + strconv.Itoa(i) + " [END]\n\n"
+		for _, b := range message {
+			inputStream <- byte(b)
+		}
+		select {
+		case msg := <-messageStream:
+			nReceved++
+			slog.Info(fmt.Sprintf("received message %d", i))
+			if msg.Data != "hello "+strconv.Itoa(i)+" [END]" {
+				t.Fatalf("expected data hello %d [END], got %s", i, msg.Data)
+			}
+		//timeout case
+		case <-time.After(1 * time.Second):
+			t.Fatalf("timeout")
+		}
+	}
+	close(inputStream)
+
+	if nReceved != nMessages {
+		t.Fatalf("expected %d messages, got %d", nMessages, nReceved)
 	}
 }
 
