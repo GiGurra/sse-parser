@@ -12,7 +12,7 @@ func TestParserChan(t *testing.T) {
 	parser := NewParser(func(dataBytes string) bool {
 		return strings.HasSuffix(dataBytes, "[END]")
 	})
-	msgChan := parser.Stream(strings.NewReader(inputBuffer))
+	msgChan := parser.Stream(strings.NewReader(inputBuffer), 100)
 	recvd := []Message{}
 	for msg := range msgChan {
 		recvd = append(recvd, msg)
@@ -41,7 +41,7 @@ func TestLongStream(t *testing.T) {
 	parser := NewParser(func(dataBytes string) bool {
 		return strings.HasSuffix(dataBytes, "[END]")
 	})
-	msgChan := parser.Stream(strings.NewReader(builder.String()))
+	msgChan := parser.Stream(strings.NewReader(builder.String()), 100)
 
 	recvd := []Message{}
 	for msg := range msgChan {
