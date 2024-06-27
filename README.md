@@ -106,7 +106,8 @@ func main() {
         "data:world"
 
     reader := strings.NewReader(data)
-    messages := parser.Stream(reader)
+	bufSize := 100
+    messages := parser.Stream(reader, bufSize)
 
     for msg := range messages {
         fmt.Printf("Event: %s, Data: %s\n", msg.Event, msg.Data)
