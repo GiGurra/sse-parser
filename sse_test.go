@@ -81,6 +81,44 @@ func TestParser(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "find valid messages in bad data",
+			inputs: []string{
+				// 2 ok messages
+				"event:message\n" +
+					"data:hello [END]\n\n" +
+					"event:message\n" +
+					"data:worl",
+				"d [END]",
+				// bad message
+				"event:message\n" +
+					"data:world ",
+				"\n\n",
+				// bad message
+				"data:world [END]",
+				"\n\n",
+				// bad message
+				"garbage\n",
+				"\n\n",
+				// 1 ok message
+				"event:message\n",
+				"data:world [END]",
+			},
+			expected: []Message{
+				{
+					Event: "message",
+					Data:  "hello [END]",
+				},
+				{
+					Event: "message",
+					Data:  "world [END]",
+				},
+				{
+					Event: "message",
+					Data:  "world [END]",
+				},
+			},
+		},
 	}
 
 	parser := NewParser(func(dataBytes string) bool {
