@@ -91,28 +91,29 @@ You can use a `Parser` to convert an `io.Reader` into a `<-chan Message`:
 package main
 
 import (
-    "fmt"
-    "github.com/GiGurra/sse-parser"
-    "strings"
+	"fmt"
+	"github.com/GiGurra/sse-parser"
+	"strings"
 )
 
 func main() {
-    // Create a parser without a completion function
-    parser := sse_parser.NewParser(nil)
+	// Create a parser without a completion function
+	parser := sse_parser.NewParser(nil)
 
-    data := "event:message\n" +
-        "data:hello\n\n" +
-        "event:message\n" +
-        "data:world"
+	data := "event:message\n" +
+		"data:hello\n\n" +
+		"event:message\n" +
+		"data:world"
 
-    reader := strings.NewReader(data)
+	reader := strings.NewReader(data)
 	bufSize := 100
-    messages := parser.Stream(reader, bufSize)
+	messages := parser.Stream(reader, bufSize)
 
-    for msg := range messages {
-        fmt.Printf("Event: %s, Data: %s\n", msg.Event, msg.Data)
-    }
+	for msg := range messages {
+		fmt.Printf("Event: %s, Data: %s\n", msg.Event, msg.Data)
+	}
 }
+
 ```
 
 ## Behavior
