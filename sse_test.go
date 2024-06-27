@@ -9,15 +9,34 @@ func TestParser(t *testing.T) {
 	// test cases
 	tests := []struct {
 		name     string
-		input    string
+		inputs   []string
 		expected []Message
 	}{
 		{
 			name: "basic-case",
-			input: "event:message\n" +
+			inputs: []string{"event:message\n" +
 				"data:hello [END]\n\n" +
 				"event:message\n" +
-				"data:world [END]\n\n",
+				"data:world [END]",
+			},
+			expected: []Message{
+				{
+					Event: "message",
+					Data:  "hello [END]",
+				},
+				{
+					Event: "message",
+					Data:  "world [END]",
+				},
+			},
+		},
+		{
+			name: "basic-case-with-extra-newlines",
+			inputs: []string{"event:message\n" +
+				"data:hello [END]\n\n" +
+				"event:message\n" +
+				"data:world [END]\n\n\n\n\n\n",
+			},
 			expected: []Message{
 				{
 					Event: "message",
@@ -31,14 +50,34 @@ func TestParser(t *testing.T) {
 		},
 		{
 			name: "truncated end",
-			input: "event:message\n" +
+			inputs: []string{"event:message\n" +
 				"data:hello [END]\n\n" +
 				"event:message\n" +
-				"data:worl\n\n",
+				"data:worl",
+			},
 			expected: []Message{
 				{
 					Event: "message",
 					Data:  "hello [END]",
+				},
+			},
+		},
+		{
+			name: "truncated end fixed",
+			inputs: []string{"event:message\n" +
+				"data:hello [END]\n\n" +
+				"event:message\n" +
+				"data:worl",
+				"d [END]",
+			},
+			expected: []Message{
+				{
+					Event: "message",
+					Data:  "hello [END]",
+				},
+				{
+					Event: "message",
+					Data:  "world [END]",
 				},
 			},
 		},
@@ -52,19 +91,22 @@ func TestParser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			parser.Reset()
-			result := parser.Add(tt.input)
+			result := []Message{}
+			for _, input := range tt.inputs {
+				result = append(result, parser.Add(input)...)
+			}
 			result = append(result, parser.Finish()...)
 
 			if len(result) != len(tt.expected) {
-				t.Errorf("expected %d messages, got %d", len(tt.expected), len(result))
+				t.Fatalf("expected %d messages, got %d", len(tt.expected), len(result))
 			}
 
 			for i, msg := range result {
 				if msg.Event != tt.expected[i].Event {
-					t.Errorf("expected event %s, got %s", tt.expected[i].Event, msg.Event)
+					t.Fatalf("expected event %s, got %s", tt.expected[i].Event, msg.Event)
 				}
 				if msg.Data != tt.expected[i].Data {
-					t.Errorf("expected data %s, got %s", tt.expected[i].Data, msg.Data)
+					t.Fatalf("expected data %s, got %s", tt.expected[i].Data, msg.Data)
 				}
 			}
 		})
