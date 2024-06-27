@@ -1,9 +1,58 @@
 package sse_parser
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 )
+
+func TestParserChan(t *testing.T) {
+	inputBuffer := "event:message\ndata:hello [END]\n\n"
+	parser := NewParser(func(dataBytes string) bool {
+		return strings.HasSuffix(dataBytes, "[END]")
+	})
+	msgChan := parser.Stream(strings.NewReader(inputBuffer))
+	recvd := []Message{}
+	for msg := range msgChan {
+		recvd = append(recvd, msg)
+	}
+
+	if len(recvd) != 1 {
+		t.Fatalf("expected 1 message, got %d", len(recvd))
+	}
+
+	if recvd[0].Event != "message" {
+		t.Fatalf("expected event message, got %s", recvd[0].Event)
+	}
+
+	if recvd[0].Data != "hello [END]" {
+		t.Fatalf("expected data hello [END], got %s", recvd[0].Data)
+	}
+}
+
+func TestLongStream(t *testing.T) {
+	nMessages := 1000
+	builder := strings.Builder{}
+	for i := 0; i < nMessages; i++ {
+		builder.WriteString("event:message\ndata:hello " + strconv.Itoa(i) + " [END]\n\n")
+	}
+
+	parser := NewParser(func(dataBytes string) bool {
+		return strings.HasSuffix(dataBytes, "[END]")
+	})
+	msgChan := parser.Stream(strings.NewReader(builder.String()))
+
+	recvd := []Message{}
+	for msg := range msgChan {
+		recvd = append(recvd, msg)
+	}
+
+	fmt.Printf("received %d messages\n", len(recvd))
+	if len(recvd) != nMessages {
+		t.Fatalf("expected %d messages, got %d", nMessages, len(recvd))
+	}
+}
 
 func TestParser(t *testing.T) {
 	// test cases

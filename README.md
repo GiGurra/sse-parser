@@ -83,6 +83,37 @@ func main() {
 
 ```
 
+## Streaming data
+
+You can use a `Parser` to convert an `io.Reader` into a `<-chan Message`:
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/GiGurra/sse-parser"
+    "strings"
+)
+
+func main() {
+    // Create a parser without a completion function
+    parser := sse_parser.NewParser(nil)
+
+    data := "event:message\n" +
+        "data:hello\n\n" +
+        "event:message\n" +
+        "data:world"
+
+    reader := strings.NewReader(data)
+    messages := parser.Stream(reader)
+
+    for msg := range messages {
+        fmt.Printf("Event: %s, Data: %s\n", msg.Event, msg.Data)
+    }
+}
+```
+
 ## Behavior
 
 - If no completion function is provided, the parser will consider a message complete when it encounters a double

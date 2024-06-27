@@ -2,6 +2,7 @@ package sse_parser
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"strings"
 )
@@ -125,4 +126,40 @@ func (p *Parser) Add(data string) []Message {
 
 func (p *Parser) Finish() []Message {
 	return p.doParseAll(true)
+}
+
+type Writer struct {
+	parser *Parser
+	ch     chan Message
+}
+
+var _ io.Writer = &Writer{}
+
+func (w *Writer) Write(p []byte) (n int, err error) {
+	messages := w.parser.Add(string(p))
+	for _, message := range messages {
+		w.ch <- message
+	}
+	return len(p), nil
+}
+
+func (w *Writer) Finish() {
+	for _, message := range w.parser.Finish() {
+		w.ch <- message
+	}
+}
+
+func (p *Parser) Stream(reader io.Reader) <-chan Message {
+	ch := make(chan Message)
+	writer := &Writer{parser: p, ch: ch}
+
+	go func() {
+		defer close(ch)
+		defer writer.Finish()
+		_, err := io.Copy(writer, reader)
+		if err != nil {
+			slog.Error(fmt.Sprintf("Error reading from stream: %v", err))
+		}
+	}()
+	return ch
 }
