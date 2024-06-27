@@ -107,6 +107,11 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
 
+## Future improvements
+
+* The completion should be able to override the default behavior of considering a message complete when encountering a
+  double newline.
+
 ---
 
 Feel free to reach out if you have any questions or need further assistance. Happy coding!
