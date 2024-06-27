@@ -101,9 +101,10 @@ func (p *Parser) doParseAll(isFinish bool) []Message {
 	if isFinish || p.dataCompleteFn != nil {
 		lastMessage, ok := p.doParseSingle(lastPart)
 		if !ok {
-			p.buffer.WriteString(lastPart) // put it back to parse later when we have more data
 			if isFinish {
 				slog.Error(fmt.Sprintf("Invalid last message piece: %s, skipping", lastPart))
+			} else {
+				p.buffer.WriteString(lastPart) // put it back to parse later when we have more data
 			}
 			return messages
 		}
