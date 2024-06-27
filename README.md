@@ -89,7 +89,7 @@ func main() {
   newline (`\n\n`).
 - If a completion function is provided, it will be used to determine when a message's data is complete. WARNING: `\n\n`
   still indicates a hard separation between messages, so the completion function is only really necessary to handle
-  cases where we have received the full data but no the `\n\n` yet.
+  cases where we have received the full data but not the `\n\n` yet.
 
 ## Testing
 
