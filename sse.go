@@ -29,21 +29,37 @@ func (p *Parser) Reset() {
 
 func (p *Parser) doParseSingle(all string) (Message, bool) {
 	lineInPart := strings.Split(all, "\n")
-	if len(lineInPart) < 2 {
-		return Message{}, false
-	}
-	eventLine := lineInPart[0]
-	dataLines := strings.Join(lineInPart[1:], "\n")
 
-	if !strings.HasPrefix(eventLine, "event:") {
-		return Message{}, false
-	}
-	if !strings.HasPrefix(dataLines, "data:") {
+	if len(lineInPart) == 0 {
 		return Message{}, false
 	}
 
-	event := strings.TrimPrefix(eventLine, "event:")
-	data := strings.TrimPrefix(dataLines, "data:")
+	firstLine := lineInPart[0]
+	event := ""
+	data := ""
+	if strings.HasPrefix(firstLine, "event:") {
+		// normal
+		if len(lineInPart) < 2 {
+			return Message{}, false
+		}
+
+		dataLines := strings.Join(lineInPart[1:], "\n")
+
+		// Can either start with "event:" or "data:"
+		if !strings.HasPrefix(dataLines, "data:") {
+			return Message{}, false
+		}
+
+		event = strings.TrimPrefix(firstLine, "event:")
+		data = strings.TrimPrefix(dataLines, "data:")
+
+	} else if strings.HasPrefix(firstLine, "data:") {
+		// just data (damn google "sse")
+		dataLines := strings.Join(lineInPart[0:], "\n")
+		data = strings.TrimPrefix(dataLines, "data:")
+	} else {
+		return Message{}, false
+	}
 
 	if p.dataCompleteFn == nil || p.dataCompleteFn(data) {
 		return Message{

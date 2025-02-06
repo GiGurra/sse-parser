@@ -200,8 +200,8 @@ func TestParser(t *testing.T) {
 				"event:message\n" +
 					"data:world ",
 				"\n\n",
-				// bad message
-				"data:world [END]",
+				// ok message (just data)
+				"data:justdata [END]",
 				"\n\n",
 				// bad message
 				"garbage\n",
@@ -218,6 +218,10 @@ func TestParser(t *testing.T) {
 				{
 					Event: "message",
 					Data:  "world [END]",
+				},
+				{
+					Event: "",
+					Data:  "justdata [END]",
 				},
 				{
 					Event: "message",
