@@ -1,5 +1,7 @@
 # SSE Parser
 
+NOTE: Archived. Not using this anymore. Thankfully nobody seems to want SSE anymore :D 
+
 This project provides a simple Server-Sent Events (SSE) parser written in Go. The parser is designed to handle streaming
 data and extract messages based on specific event and data patterns.
 
